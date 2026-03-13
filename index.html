@@ -164,9 +164,31 @@ const timer=document.getElementById("timer")
 const status=document.getElementById("status")
 
 function playBeep(){
-    const file = (phase==="rest") ? "beep_low.wav" : "beep.wav";
-    const a=new Audio(file);
-    a.play().catch(()=>{});
+
+    if(!window._audioCtx){
+        window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const audioCtx = window._audioCtx;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sine";
+
+    if(phase==="rest"){
+        osc.frequency.value = 420;
+    }else{
+        osc.frequency.value = 900;
+    }
+
+    gain.gain.value = 0.15;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.12);
 }
 
 function format(sec){
