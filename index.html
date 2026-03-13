@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -9,7 +10,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
-
 body{
     font-family: Arial, sans-serif;
     background:#111;
@@ -44,7 +44,6 @@ button{
 .status{
     font-size:22px;
 }
-
 </style>
 </head>
 
@@ -55,29 +54,19 @@ button{
 <h1>Тренировка кора</h1>
 
 <div>
-
 <button class="exercise-btn" onclick="selectExercise('Vacuum',15,10,10)">Vacuum</button>
-
 <button class="exercise-btn" onclick="selectExercise('Планка',40,45,3)">Планка</button>
-
 <button class="exercise-btn" onclick="selectExercise('Dead Bug',40,30,3)">Dead Bug</button>
-
 <button class="exercise-btn" onclick="selectExercise('Bird Dog',40,30,3)">Bird Dog</button>
-
 <button class="exercise-btn" onclick="selectExercise('Боковая планка',30,30,2)">Боковая планка</button>
-
 </div>
 
 <div class="timer" id="timer">00:00</div>
-
 <div class="status" id="status">Выберите упражнение</div>
 
 <div>
-
 <button class="control-btn" onclick="start()">Старт</button>
-
 <button class="stop-btn" onclick="stop()">Стоп</button>
-
 </div>
 
 </div>
@@ -96,12 +85,10 @@ let interval = null
 
 let wakeLock = null
 
-const beep = new Audio("beep.wav")
-
 function playBeep(){
 
-    beep.currentTime = 0
-    beep.play()
+    const audio = new Audio("beep.wav")
+    audio.play().catch(()=>{})
 
 }
 
@@ -127,14 +114,22 @@ function selectExercise(name,work,rest,s){
 
 async function enableWakeLock(){
 
+    if(!('wakeLock' in navigator)) return
+
     try{
 
         wakeLock = await navigator.wakeLock.request('screen')
 
+        wakeLock.addEventListener('release', () => {
+
+            if(document.visibilityState === 'visible'){
+                enableWakeLock()
+            }
+
+        })
+
     }catch(err){
-
         console.log("WakeLock error:",err)
-
     }
 
 }
@@ -160,7 +155,7 @@ function start(){
 
     enableWakeLock()
 
-    beep.play().then(()=>{beep.pause(); beep.currentTime=0})
+    playBeep()
 
     runTimer()
 
@@ -176,11 +171,11 @@ function runTimer(){
 
         if(currentTime===0){
 
-            playBeep()
-
             if(phase==="work"){
 
                 if(currentSet>=sets){
+
+                    playBeep()
 
                     document.getElementById("status").innerText="Упражнение завершено"
 
@@ -189,13 +184,16 @@ function runTimer(){
                     disableWakeLock()
 
                     return
-
                 }
 
                 phase="rest"
                 currentTime=restTime
 
                 document.getElementById("status").innerText="Отдых"
+
+                playBeep()
+
+                enableWakeLock()
 
             }
             else{
@@ -207,6 +205,10 @@ function runTimer(){
                 currentTime=workTime
 
                 document.getElementById("status").innerText=exerciseName+" | подход "+currentSet+"/"+sets
+
+                playBeep()
+
+                enableWakeLock()
 
             }
 
@@ -230,18 +232,14 @@ function stop(){
 
 document.addEventListener("visibilitychange", () => {
 
-    if (wakeLock !== null && document.visibilityState === "visible") {
-
+    if(document.visibilityState === "visible"){
         enableWakeLock()
-
     }
 
 })
 
 if ('serviceWorker' in navigator) {
-
     navigator.serviceWorker.register('service-worker.js')
-
 }
 
 </script>
