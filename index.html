@@ -133,6 +133,23 @@ let phaseDuration=0
 
 let animationId=null
 
+let wakeLock=null;
+
+async function requestWakeLock(){
+    try{
+        if("wakeLock" in navigator){
+            wakeLock = await navigator.wakeLock.request("screen")
+        }
+    }catch(e){}
+}
+
+function releaseWakeLock(){
+    if(wakeLock){
+        wakeLock.release()
+        wakeLock=null
+    }
+}
+
 const button=document.getElementById("mainButton")
 
 const startBtn=document.getElementById("startButton")
@@ -145,8 +162,9 @@ const timer=document.getElementById("timer")
 const status=document.getElementById("status")
 
 function playBeep(){
-    const a=new Audio("beep.wav")
-    a.play().catch(()=>{})
+    const file = (phase==="rest") ? "beep_low.wav" : "beep.wav";
+    const a=new Audio(file);
+    a.play().catch(()=>{});
 }
 
 function format(sec){
@@ -179,6 +197,7 @@ function start(){
 
     currentSet=1
     phase="work"
+    requestWakeLock()
 
     startBtn.style.display="none"
     stopBtn.style.display="block"
@@ -199,6 +218,7 @@ function stop(){
     stopBtn.style.display="none"
 
     status.innerText="Остановлено"
+    releaseWakeLock()
 
 }
 
@@ -278,6 +298,7 @@ function nextPhase(){
     else{
 
         phase="work"
+    requestWakeLock()
         currentSet++
 
         greenFill.setAttribute("width",0)
