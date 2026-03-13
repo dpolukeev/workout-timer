@@ -1,0 +1,10 @@
+context/
+node_modules/
+playwright-report/
+test-results/
+ui-shots/
+index.backup*.html
+index *копия*.html
+package.json
+package-lock.json
+scripts/

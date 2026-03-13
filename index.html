@@ -2,141 +2,412 @@
 <html lang="ru">
 <head>
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">    
+<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
 <link rel="preload" href="Montserrat-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workout Timer</title>
+<title>Тренировка кора</title>
 
 <style>
-
 @font-face{
     font-family:"MontserratCustom";
     src:url("Montserrat-Bold.woff2") format("woff2");
-    font-weight:bold;
-    font-display:block;
+    font-weight:700;
+    font-display:swap;
 }
 
+:root{
+    --bg:#040404;
+    --panel:#0d0d0d;
+    --panel-strong:rgba(255,255,255,0.1);
+    --panel-soft:rgba(255,255,255,0.05);
+    --text:#f4f4f1;
+    --muted:rgba(255,255,255,0.58);
+    --accent:#14f195;
+    --accent-deep:#075e3b;
+    --accent-soft:rgba(20,241,149,0.16);
+    --danger:#d8d8d8;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    min-height:100%;
+}
 
 body{
-    font-family: Arial, sans-serif;
-    background:#111;
-    color:#fff;
-    text-align:center;
     margin:0;
-    padding:30px;
+    background:
+        radial-gradient(circle at top right, rgba(20,241,149,0.16), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(20,241,149,0.08), transparent 30%),
+        var(--bg);
+    color:var(--text);
+    font-family:"MontserratCustom", Arial, sans-serif;
+    position:relative;
+    overflow-x:hidden;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), transparent 18%),
+        linear-gradient(0deg, rgba(255,255,255,0.02), transparent 20%);
+    z-index:0;
+}
+
+body::after{
+    content:none;
 }
 
 .container{
-    max-width:700px;
-    margin:auto;
+    width:min(100%, 460px);
+    min-height:100vh;
+    margin:0 auto;
+    padding:14px 12px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    position:relative;
+    z-index:1;
 }
 
-button.exercise{
-    padding:12px 18px;
-    margin:6px;
+.container::before{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:-5px;
+    width:calc(100% + 10px);
+    pointer-events:none;
+    background-image:url("images/bg.png");
+    background-repeat:no-repeat;
+    background-size:auto 1000px;
+    background-position:center 20px;
+    opacity:0.22;
+    z-index:0;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    min-height:76px;
+}
+
+.brandLogo{
+    width:72px;
+    height:72px;
+    object-fit:contain;
+    display:block;
+}
+
+.headline{
+    display:flex;
+    align-items:flex-start;
+    justify-content:flex-end;
+    gap:12px;
+    min-height:76px;
+    flex:1;
+}
+
+.title{
+    margin:0;
+    max-width:230px;
+    font-size:clamp(24px, 6vw, 36px);
+    line-height:1;
+    text-align:right;
+    overflow-wrap:anywhere;
+    text-wrap:balance;
+}
+
+.subtitle{
+    color:var(--muted);
+    font-size:13px;
+    letter-spacing:0.03em;
+    min-height:18px;
+    text-align:center;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+}
+
+.stat{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px;
+    padding:10px 10px 8px;
+}
+
+.statValue{
+    display:block;
+    font-size:24px;
+    line-height:1;
+}
+
+.statLabel{
+    display:block;
+    margin-top:7px;
+    color:var(--muted);
+    font-size:10px;
+}
+
+.exerciseGrid{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.exerciseCard{
+    position:relative;
+    border-radius:12px;
+    padding:8px 10px 10px;
+    color:var(--text);
+    text-align:left;
+    cursor:pointer;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.08);
+    transition:transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.exerciseCard:active{
+    transform:scale(0.985);
+}
+
+.exerciseCard.selected{
+    background:rgba(20,241,149,0.05);
+    border-color:rgba(20,241,149,0.65);
+}
+
+.exerciseCard.activeExercise{
+    box-shadow:0 0 0 1px rgba(20,241,149,0.35);
+}
+
+.exerciseMeta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+}
+
+.exerciseName{
+    margin:0;
     font-size:16px;
-    border:none;
-    border-radius:6px;
-    background:#2b6cb0;
-    color:white;
+    line-height:1.1;
+}
+
+.exerciseConfig{
+    color:var(--accent);
+    font-size:12px;
+    text-align:right;
+    white-space:nowrap;
+}
+
+.setProgress{
+    display:grid;
+    gap:6px;
+}
+
+.setRail{
+    display:grid;
+    gap:4px;
+}
+
+.setDot{
+    position:relative;
+    overflow:hidden;
+    height:10px;
+    border-radius:999px;
+    background:rgba(20,241,149,0.15);
+}
+
+.setDot::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    width:var(--fill, 0%);
+    border-radius:inherit;
+    background:linear-gradient(90deg, var(--accent), #31ffba);
+    transition:width 0.15s linear, background 0.2s ease;
+}
+
+.setDot.done::after{
+    width:100%;
+}
+
+.setDot.current::after{
+    width:var(--fill, 0%);
+}
+
+.setDot.resting::after{
+    width:100%;
+    background:linear-gradient(90deg, var(--accent-deep), #14945f);
+}
+
+.setCaption{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:var(--muted);
+    font-size:10px;
+}
+
+.timerWrap{
+    margin-top:10px;
+    padding:14px 8px 0;
+    display:grid;
+    gap:4px;
+    text-align:center;
 }
 
 .timer{
-    font-size:64px;
-    margin:30px 0;
+    width:100%;
+    display:block;
+    font-size:clamp(82px, 27vw, 156px);
+    line-height:0.85;
+    letter-spacing:-0.06em;
+    font-variant-numeric:tabular-nums;
+    font-feature-settings:"tnum" 1, "lnum" 1;
+    text-align:center;
+    padding-left:0;
+    margin:0 auto;
 }
 
-.status{
-    font-size:22px;
-    margin-bottom:20px;
+.timerHint{
+    display:none;
 }
 
 .buttonWrapper{
-    width:220px;
-    margin:auto;
+    width:min(76vw, 260px);
+    margin:10px auto 0;
     cursor:pointer;
+    filter:drop-shadow(0 18px 34px rgba(0,0,0,0.38));
 }
 
+#startButton,
 svg{
-    width:220px;
+    display:block;
+    width:100%;
+}
+
+#startButton,
+#stopButton{
+    aspect-ratio:560 / 442;
+    height:auto;
 }
 
 .centerText{
     font-family:"MontserratCustom", sans-serif;
-    font-size:110px;
-    fill:black;
+    font-size:92px;
+    fill:#03150d;
     dominant-baseline:middle;
     text-anchor:middle;
     pointer-events:none;
     opacity:1;
-    transition:opacity 0.02s linear;
+    transition:opacity 0.04s linear;
 }
 
+@media (max-width:380px){
+    .container{
+        padding-inline:10px;
+    }
+
+    .exerciseName{
+        font-size:15px;
+    }
+
+    .statValue{
+        font-size:20px;
+    }
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
+    <div class="topbar">
+        <img class="brandLogo" src="images/logo.png" alt="CORE">
+        <section class="headline">
+            <h1 class="title" id="title">Вакуум</h1>
+        </section>
+    </div>
 
-<h1>Тренировка кора</h1>
+    <section class="stats">
+        <div class="stat">
+            <span class="statValue" id="statCalories">0</span>
+            <span class="statLabel">Калории</span>
+        </div>
+        <div class="stat">
+            <span class="statValue" id="statElapsed">00:00</span>
+            <span class="statLabel">Время</span>
+        </div>
+        <div class="stat">
+            <span class="statValue" id="statSets">0/10</span>
+            <span class="statLabel">Подходы</span>
+        </div>
+    </section>
 
-<div>
-<button class="exercise" onclick="selectExercise('Vacuum',15,10,10)">Vacuum</button>
-<button class="exercise" onclick="selectExercise('Планка',40,45,3)">Планка</button>
-<button class="exercise" onclick="selectExercise('Dead Bug',40,30,3)">Dead Bug</button>
-<button class="exercise" onclick="selectExercise('Bird Dog',40,30,3)">Bird Dog</button>
-<button class="exercise" onclick="selectExercise('Боковая планка',30,30,2)">Боковая планка</button>
-</div>
+    <section class="exerciseGrid" id="exerciseGrid"></section>
 
-<div class="timer" id="timer">00:00</div>
-<div class="status" id="status">Выберите упражнение</div>
+    <section class="timerWrap">
+        <div class="timer" id="timer">00:00</div>
+        <div class="subtitle" id="status">Выберите упражнение и нажмите на логотип</div>
 
-<div class="buttonWrapper" id="mainButton">
+        <div class="buttonWrapper" id="mainButton">
+            <img id="startButton" src="core-button.png" alt="Старт">
 
-<img id="startButton" src="core-button.png" width="220">
+            <svg id="stopButton" viewBox="0 0 560 442" style="display:none" aria-label="Стоп" shape-rendering="geometricPrecision">
+                <defs>
+                    <clipPath id="buttonClip">
+                        <rect x="0" y="0" width="560" height="442" rx="160"/>
+                    </clipPath>
+                </defs>
 
-<svg id="stopButton" viewBox="0 0 560 442" style="display:none">
-
-<defs>
-<clipPath id="buttonClip">
-<rect x="0" y="0" width="560" height="442" rx="160"/>
-</clipPath>
-</defs>
-
-<!-- base -->
-<rect x="0" y="0" width="560" height="442" rx="160" fill="#005D35"/>
-
-<!-- work fill -->
-<rect id="greenFill" x="0" y="0" width="0" height="442" rx="40" fill="#00FF90" clip-path="url(#buttonClip)"/>
-<rect id="darkFill" x="560" y="0" width="0" height="442" rx="40" fill="#005D35" clip-path="url(#buttonClip)"/>
-
-<!-- center text -->
-<text id="centerLabel" x="280" y="221" class="centerText">1/3</text>
-
-</svg>
-
-</div>
-
+                <rect x="0" y="0" width="560" height="442" rx="160" fill="#032c1a"/>
+                <rect id="greenFill" x="-80" y="0" width="0" height="442" rx="80" fill="#00FF90" clip-path="url(#buttonClip)"/>
+                <rect id="darkFill" x="-80" y="0" width="0" height="442" rx="80" fill="#005D35" clip-path="url(#buttonClip)"/>
+                <text id="centerLabel" x="280" y="221" class="centerText">1 / 3</text>
+            </svg>
+        </div>
+    </section>
 </div>
 
 <script>
+const exercises = [
+    { id:"vacuum", name:"Вакуум", work:15, rest:10, sets:10, wide:true },
+    { id:"plank", name:"Планка", work:40, rest:45, sets:3 },
+    { id:"dead-bug", name:"Мёртвый жук", work:40, rest:30, sets:3 },
+    { id:"bird-dog", name:"Охотничья собака", work:40, rest:30, sets:3 },
+    { id:"side-plank", name:"Боковая планка", work:30, rest:30, sets:2, wide:true }
+]
 
-let exerciseName=""
-let workTime=0
-let restTime=0
-let sets=0
+let selectedExercise = exercises[0]
+let exerciseName = selectedExercise.name
+let workTime = selectedExercise.work
+let restTime = selectedExercise.rest
+let sets = selectedExercise.sets
 
-let currentSet=0
-let phase="idle"
+let currentSet = 0
+let phase = "idle"
+const buttonFillRadius = 80
 
-let phaseStart=0
-let phaseDuration=0
+let phaseStart = 0
+let phaseDuration = 0
+let sessionStart = 0
+const completedSetsByExercise = Object.fromEntries(exercises.map((exercise) => [exercise.id, 0]))
 
-let animationId=null
-
-let wakeLock=null;
+let animationId = null
+let wakeLock = null
 
 async function requestWakeLock(){
     try{
@@ -149,203 +420,342 @@ async function requestWakeLock(){
 function releaseWakeLock(){
     if(wakeLock){
         wakeLock.release()
-        wakeLock=null
+        wakeLock = null
     }
 }
 
-const button=document.getElementById("mainButton")
+const button = document.getElementById("mainButton")
+const startBtn = document.getElementById("startButton")
+const stopBtn = document.getElementById("stopButton")
+const greenFill = document.getElementById("greenFill")
+const darkFill = document.getElementById("darkFill")
+const label = document.getElementById("centerLabel")
 
-const startBtn=document.getElementById("startButton")
-const stopBtn=document.getElementById("stopButton")
-
-const greenFill=document.getElementById("greenFill")
-const darkFill=document.getElementById("darkFill")
-const label=document.getElementById("centerLabel")
-
-const timer=document.getElementById("timer")
-const status=document.getElementById("status")
+const title = document.getElementById("title")
+const timer = document.getElementById("timer")
+const status = document.getElementById("status")
+const statCalories = document.getElementById("statCalories")
+const statElapsed = document.getElementById("statElapsed")
+const statSets = document.getElementById("statSets")
+const exerciseGrid = document.getElementById("exerciseGrid")
 
 function playBeep(){
-
     if(!window._audioCtx){
-        window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window._audioCtx = new (window.AudioContext || window.webkitAudioContext)()
     }
 
-    const audioCtx = window._audioCtx;
+    const audioCtx = window._audioCtx
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
 
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    osc.type = "sine"
+    osc.frequency.value = phase === "rest" ? 420 : 900
+    gain.gain.value = 0.15
 
-    osc.type = "sine";
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
 
-    if(phase==="rest"){
-        osc.frequency.value = 420;
-    }else{
-        osc.frequency.value = 900;
-    }
-
-    gain.gain.value = 0.15;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
+    osc.start()
+    osc.stop(audioCtx.currentTime + 0.12)
 }
 
 function format(sec){
-    let m=Math.floor(sec/60)
-    let s=Math.floor(sec%60)
-    return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+    const m = Math.floor(sec / 60)
+    const s = Math.floor(sec % 60)
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0")
 }
 
-function selectExercise(name,work,rest,s){
-    exerciseName=name
-    workTime=work
-    restTime=rest
-    sets=s
-    status.innerText=name+" | "+sets+" подходов"
+function renderExerciseCards(){
+    exerciseGrid.innerHTML = exercises.map((exercise) => {
+        const selectedClass = exercise.id === selectedExercise.id ? "selected" : ""
+        const activeClass = exercise.name === exerciseName && phase !== "idle" ? "activeExercise" : ""
+        const dots = Array.from({ length: exercise.sets }, (_, index) => {
+            const state = getSetState(exercise, index)
+            const fill = getSetFill(exercise, index)
+            return `<span class="setDot ${state}" style="--fill:${fill}%"></span>`
+        }).join("")
+
+        return `
+            <button
+                class="exerciseCard ${selectedClass} ${activeClass}"
+                type="button"
+                data-id="${exercise.id}"
+            >
+                <div class="exerciseMeta">
+                    <h2 class="exerciseName">${exercise.name}</h2>
+                    <div class="exerciseConfig">${getCompletedSets(exercise)}/${exercise.sets}</div>
+                </div>
+                <div class="setProgress">
+                    <div class="setRail" style="grid-template-columns:repeat(${exercise.sets}, minmax(0, 1fr))">${dots}</div>
+                </div>
+            </button>
+        `
+    }).join("")
+
+    exerciseGrid.querySelectorAll(".exerciseCard").forEach((card) => {
+        card.addEventListener("click", () => {
+            const exercise = exercises.find((item) => item.id === card.dataset.id)
+            if(exercise){
+                selectExercise(exercise)
+            }
+        })
+    })
 }
 
-button.onclick=function(){
+function getSetState(exercise, index){
+    const setNumber = index + 1
+    const isActiveExercise = exercise.id === selectedExercise.id && phase !== "idle"
+    const completedSets = getCompletedSets(exercise)
 
-    if(phase==="idle"){
-        start()
-    }else{
-        stop()
+    if(!isActiveExercise){
+        return setNumber <= completedSets ? "done" : ""
     }
 
+    if(phase === "work"){
+        if(setNumber < currentSet) return "done"
+        if(setNumber === currentSet) return "current"
+        return ""
+    }
+
+    if(setNumber <= currentSet){
+        return setNumber === currentSet ? "resting" : "done"
+    }
+
+    return ""
+}
+
+function getCompletedSets(exercise){
+    const persisted = completedSetsByExercise[exercise.id] || 0
+    const isActiveExercise = exercise.id === selectedExercise.id
+
+    if(!isActiveExercise || phase === "idle"){
+        return persisted
+    }
+
+    if(phase === "rest"){
+        return Math.max(persisted, currentSet)
+    }
+
+    return Math.max(persisted, currentSet - 1, 0)
+}
+
+function getSetFill(exercise, index){
+    const setNumber = index + 1
+    const isActiveExercise = exercise.id === selectedExercise.id && phase !== "idle"
+    const completedSets = getCompletedSets(exercise)
+
+    if(!isActiveExercise){
+        return setNumber <= completedSets ? 100 : 0
+    }
+
+    if(phase === "work" && setNumber === currentSet && phaseDuration){
+        const elapsed = Math.max((performance.now() - phaseStart) / 1000, 0)
+        return Math.min(elapsed / phaseDuration, 1) * 100
+    }
+
+    if(phase === "work"){
+        return setNumber < currentSet ? 100 : 0
+    }
+
+    if(phase === "rest"){
+        return setNumber <= currentSet ? 100 : 0
+    }
+
+    return 0
+}
+
+function updateHeader(){
+    title.textContent = exerciseName
+    statSets.textContent = `${getCompletedSets(selectedExercise)}/${sets}`
+}
+
+function updateStatus(text){
+    status.textContent = text
+}
+
+function updateSummaryStats(){
+    const elapsed = sessionStart ? Math.max((performance.now() - sessionStart) / 1000, 0) : 0
+    statElapsed.textContent = format(elapsed)
+    statSets.textContent = `${getCompletedSets(selectedExercise)}/${sets}`
+    statCalories.textContent = String(getCompletedSets(selectedExercise))
+}
+
+function persistCompletedProgress(){
+    const completedSets = getCompletedSets(selectedExercise)
+    completedSetsByExercise[selectedExercise.id] = Math.min(completedSets, sets)
+}
+
+function updatePhaseState(idleStatus = "Выберите упражнение и нажмите на логотип"){
+    if(phase === "work"){
+        updateStatus("Работа")
+        return
+    }
+
+    if(phase === "rest"){
+        updateStatus("Отдых")
+        return
+    }
+
+    updateStatus(idleStatus)
+}
+
+function selectExercise(exercise){
+    if(phase !== "idle"){
+        stop("Таймер остановлен")
+    }
+
+    selectedExercise = exercise
+    exerciseName = exercise.name
+    workTime = exercise.work
+    restTime = exercise.rest
+    sets = exercise.sets
+
+    updateHeader()
+    updatePhaseState()
+    updateSummaryStats()
+    timer.textContent = format(workTime)
+    renderExerciseCards()
+}
+
+button.onclick = function(){
+    if(phase === "idle"){
+        start()
+    }else{
+        stop("Остановлено")
+    }
 }
 
 function start(){
-
     if(!exerciseName) return
 
-    currentSet=1
-    phase="work"
+    cancelAnimationFrame(animationId)
+    completedSetsByExercise[selectedExercise.id] = 0
+
+    currentSet = 1
+    phase = "work"
+    sessionStart = performance.now()
     requestWakeLock()
 
-    startBtn.style.display="none"
-    stopBtn.style.display="block"
+    startBtn.style.display = "none"
+    stopBtn.style.display = "block"
 
+    updateHeader()
+    updatePhaseState()
+    updateSummaryStats()
     startPhase(workTime)
-
+    renderExerciseCards()
 }
 
-function stop(){
-
+function stop(message = "Остановлено"){
     cancelAnimationFrame(animationId)
+    persistCompletedProgress()
 
-    phase="idle"
+    phase = "idle"
+    currentSet = 0
+    sessionStart = 0
 
-    greenFill.setAttribute("width",0)
-    darkFill.setAttribute("width",0)
-    darkFill.setAttribute("x",560)
+    greenFill.setAttribute("width", 0)
+    darkFill.setAttribute("width", 0)
+    greenFill.setAttribute("x", -buttonFillRadius)
+    darkFill.setAttribute("x", -buttonFillRadius)
 
-    startBtn.style.display="block"
-    stopBtn.style.display="none"
+    startBtn.style.display = "block"
+    stopBtn.style.display = "none"
 
-    status.innerText="Остановлено"
+    timer.textContent = format(workTime)
+    updateHeader()
+    updatePhaseState(message)
+    updateSummaryStats()
     releaseWakeLock()
-
+    renderExerciseCards()
 }
 
 function startPhase(duration){
-
-    phaseDuration=duration
-    phaseStart=performance.now()
+    phaseDuration = duration
+    phaseStart = performance.now()
 
     playBeep()
-
     animate()
-
 }
 
-
 function setLabel(text){
-    if(label.textContent===text) return;
-    label.style.opacity=0;
-    setTimeout(()=>{
-        label.textContent=text;
-        label.style.opacity=1;
-    },20);
+    if(label.textContent === text) return
+    label.style.opacity = 0
+    setTimeout(() => {
+        label.textContent = text
+        label.style.opacity = 1
+    }, 20)
 }
 
 function animate(){
+    const now = performance.now()
+    const elapsed = (now - phaseStart) / 1000
+    const progress = Math.min(elapsed / phaseDuration, 1)
 
-    let now=performance.now()
-    let elapsed=(now-phaseStart)/1000
-
-    let progress=Math.min(elapsed/phaseDuration,1)
-
-    if(phase==="work"){
-
-        setLabel(currentSet+" / "+sets)
-        greenFill.setAttribute("width",560*progress)
-
-    }
-    else if(phase==="rest"){
-
+    if(phase === "work"){
+        setLabel(`${currentSet} / ${sets}`)
+        greenFill.setAttribute("x", -buttonFillRadius)
+        greenFill.setAttribute("width", progress > 0 ? 560 * progress + buttonFillRadius : 0)
+        darkFill.setAttribute("width", 0)
+        darkFill.setAttribute("x", -buttonFillRadius)
+    }else if(phase === "rest"){
         setLabel("Отдых")
-
-        greenFill.setAttribute("width",560)
-
-        const w = 560*progress
-        darkFill.setAttribute("width",w)
-        darkFill.setAttribute("x",560-w)
-
+        greenFill.setAttribute("width", 560)
+        greenFill.setAttribute("x", 0)
+        const w = progress > 0 ? 560 * progress + buttonFillRadius : 0
+        darkFill.setAttribute("width", w)
+        darkFill.setAttribute("x", -buttonFillRadius)
     }
 
-    let remaining=Math.max(phaseDuration-elapsed,0)
-    timer.innerText=format(remaining)
+    const remaining = Math.max(phaseDuration - elapsed, 0)
+    timer.textContent = format(remaining)
+    updateSummaryStats()
+    renderExerciseCards()
 
-    if(progress>=1){
-
+    if(progress >= 1){
         nextPhase()
         return
-
     }
 
-    animationId=requestAnimationFrame(animate)
-
+    animationId = requestAnimationFrame(animate)
 }
 
 function nextPhase(){
-
-    if(phase==="work"){
-
-        if(currentSet>=sets){
-
-            stop()
-            status.innerText="Упражнение завершено"
+    if(phase === "work"){
+        if(currentSet >= sets){
+            completedSetsByExercise[selectedExercise.id] = sets
+            stop("Упражнение завершено")
             return
-
         }
 
-        phase="rest"
-        status.innerText="Отдых"
-
+        phase = "rest"
+        updateHeader()
+        updatePhaseState()
+        updateSummaryStats()
         startPhase(restTime)
-
+        return
     }
-    else{
 
-        phase="work"
+    phase = "work"
     requestWakeLock()
-        currentSet++
+    currentSet++
 
-        greenFill.setAttribute("width",0)
-    darkFill.setAttribute("width",0)
-    darkFill.setAttribute("x",560)
+    greenFill.setAttribute("width", 0)
+    darkFill.setAttribute("width", 0)
+    greenFill.setAttribute("x", -buttonFillRadius)
+    darkFill.setAttribute("x", -buttonFillRadius)
 
-        status.innerText=exerciseName+" | подход "+currentSet+"/"+sets
-
-        startPhase(workTime)
-
-    }
-
+    updateHeader()
+    updatePhaseState()
+    updateSummaryStats()
+    startPhase(workTime)
 }
 
+updateHeader()
+updatePhaseState()
+updateSummaryStats()
+timer.textContent = format(workTime)
+renderExerciseCards()
 </script>
 
 </body>
