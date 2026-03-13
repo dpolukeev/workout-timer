@@ -189,6 +189,7 @@ body::after{
     color:var(--text);
     text-align:left;
     cursor:pointer;
+    appearance:none;
     background:rgba(6,10,9,0.58);
     border:1px solid rgba(255,255,255,0.07);
     backdrop-filter:blur(10px);
@@ -206,6 +207,15 @@ body::after{
 
 .exerciseCard.activeExercise{
     box-shadow:0 0 0 1px rgba(20,241,149,0.35);
+}
+
+.exerciseCard:disabled{
+    cursor:default;
+    pointer-events:none;
+}
+
+.exerciseGrid.locked .exerciseCard:not(.activeExercise){
+    opacity:0.72;
 }
 
 .exerciseMeta{
@@ -528,9 +538,13 @@ function format(sec){
 }
 
 function renderExerciseCards(){
+    const exercisesLocked = phase !== "idle"
+    exerciseGrid.classList.toggle("locked", exercisesLocked)
+
     exerciseGrid.innerHTML = exercises.map((exercise) => {
         const selectedClass = exercise.id === selectedExercise.id ? "selected" : ""
         const activeClass = exercise.name === exerciseName && phase !== "idle" ? "activeExercise" : ""
+        const disabledAttr = exercisesLocked ? "disabled" : ""
         const dots = Array.from({ length: exercise.sets }, (_, index) => {
             const state = getSetState(exercise, index)
             const fill = getSetFill(exercise, index)
@@ -542,6 +556,7 @@ function renderExerciseCards(){
                 class="exerciseCard ${selectedClass} ${activeClass}"
                 type="button"
                 data-id="${exercise.id}"
+                ${disabledAttr}
             >
                 <div class="exerciseMeta">
                     <h2 class="exerciseName">${exercise.name}</h2>
@@ -554,14 +569,16 @@ function renderExerciseCards(){
         `
     }).join("")
 
-    exerciseGrid.querySelectorAll(".exerciseCard").forEach((card) => {
-        card.addEventListener("click", () => {
-            const exercise = exercises.find((item) => item.id === card.dataset.id)
-            if(exercise){
-                selectExercise(exercise)
-            }
+    if(!exercisesLocked){
+        exerciseGrid.querySelectorAll(".exerciseCard").forEach((card) => {
+            card.addEventListener("click", () => {
+                const exercise = exercises.find((item) => item.id === card.dataset.id)
+                if(exercise){
+                    selectExercise(exercise)
+                }
+            })
         })
-    })
+    }
 }
 
 function getSetState(exercise, index){
