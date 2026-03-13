@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Workout Timer</title>
 
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-
 <style>
+
+@font-face{
+    font-family:"MontserratCustom";
+    src:url("Montserrat-Bold.ttf") format("truetype");
+    font-weight:bold;
+}
+
+
 body{
     font-family: Arial, sans-serif;
     background:#111;
@@ -24,26 +28,47 @@ body{
     margin:auto;
 }
 
-button{
+button.exercise{
     padding:12px 18px;
     margin:6px;
     font-size:16px;
     border:none;
     border-radius:6px;
+    background:#2b6cb0;
+    color:white;
 }
 
-.exercise-btn{background:#2b6cb0;color:white}
-.control-btn{background:#38a169;color:white}
-.stop-btn{background:#e53e3e;color:white}
-
 .timer{
-    font-size:72px;
+    font-size:64px;
     margin:30px 0;
 }
 
 .status{
     font-size:22px;
+    margin-bottom:20px;
 }
+
+.buttonWrapper{
+    width:220px;
+    margin:auto;
+    cursor:pointer;
+}
+
+svg{
+    width:220px;
+}
+
+.centerText{
+    font-family:"MontserratCustom", sans-serif;
+    font-size:110px;
+    fill:black;
+    dominant-baseline:middle;
+    text-anchor:middle;
+    pointer-events:none;
+    opacity:1;
+    transition:opacity 0.02s linear;
+}
+
 </style>
 </head>
 
@@ -54,93 +79,94 @@ button{
 <h1>Тренировка кора</h1>
 
 <div>
-<button class="exercise-btn" onclick="selectExercise('Vacuum',15,10,10)">Vacuum</button>
-<button class="exercise-btn" onclick="selectExercise('Планка',40,45,3)">Планка</button>
-<button class="exercise-btn" onclick="selectExercise('Dead Bug',40,30,3)">Dead Bug</button>
-<button class="exercise-btn" onclick="selectExercise('Bird Dog',40,30,3)">Bird Dog</button>
-<button class="exercise-btn" onclick="selectExercise('Боковая планка',30,30,2)">Боковая планка</button>
+<button class="exercise" onclick="selectExercise('Vacuum',15,10,10)">Vacuum</button>
+<button class="exercise" onclick="selectExercise('Планка',40,45,3)">Планка</button>
+<button class="exercise" onclick="selectExercise('Dead Bug',40,30,3)">Dead Bug</button>
+<button class="exercise" onclick="selectExercise('Bird Dog',40,30,3)">Bird Dog</button>
+<button class="exercise" onclick="selectExercise('Боковая планка',30,30,2)">Боковая планка</button>
 </div>
 
 <div class="timer" id="timer">00:00</div>
 <div class="status" id="status">Выберите упражнение</div>
 
-<div>
-<button class="control-btn" onclick="start()">Старт</button>
-<button class="stop-btn" onclick="stop()">Стоп</button>
+<div class="buttonWrapper" id="mainButton">
+
+<img id="startButton" src="core-button.png" width="220">
+
+<svg id="stopButton" viewBox="0 0 560 442" style="display:none">
+
+<defs>
+<clipPath id="buttonClip">
+<rect x="0" y="0" width="560" height="442" rx="160"/>
+</clipPath>
+</defs>
+
+<!-- base -->
+<rect x="0" y="0" width="560" height="442" rx="160" fill="#005D35"/>
+
+<!-- work fill -->
+<rect id="greenFill" x="0" y="0" width="0" height="442" rx="40" fill="#00FF90" clip-path="url(#buttonClip)"/>
+
+<!-- center text -->
+<text id="centerLabel" x="280" y="221" class="centerText">1/3</text>
+
+</svg>
+
 </div>
 
 </div>
 
 <script>
 
-let exerciseName = ""
-let workTime = 0
-let restTime = 0
-let sets = 0
+let exerciseName=""
+let workTime=0
+let restTime=0
+let sets=0
 
-let currentSet = 0
-let currentTime = 0
-let phase = "work"
-let interval = null
+let currentSet=0
+let phase="idle"
 
-let wakeLock = null
+let phaseStart=0
+let phaseDuration=0
+
+let animationId=null
+
+const button=document.getElementById("mainButton")
+
+const startBtn=document.getElementById("startButton")
+const stopBtn=document.getElementById("stopButton")
+
+const greenFill=document.getElementById("greenFill")
+const label=document.getElementById("centerLabel")
+
+const timer=document.getElementById("timer")
+const status=document.getElementById("status")
 
 function playBeep(){
-
-    const audio = new Audio("beep.wav")
-    audio.play().catch(()=>{})
-
+    const a=new Audio("beep.wav")
+    a.play().catch(()=>{})
 }
 
-function format(t){
-
-    let m = Math.floor(t/60)
-    let s = t%60
-
+function format(sec){
+    let m=Math.floor(sec/60)
+    let s=Math.floor(sec%60)
     return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
-
 }
 
 function selectExercise(name,work,rest,s){
-
     exerciseName=name
     workTime=work
     restTime=rest
     sets=s
-
-    document.getElementById("status").innerText=name+" | "+sets+" подходов"
-
+    status.innerText=name+" | "+sets+" подходов"
 }
 
-async function enableWakeLock(){
+button.onclick=function(){
 
-    if(!('wakeLock' in navigator)) return
-
-    try{
-
-        wakeLock = await navigator.wakeLock.request('screen')
-
-        wakeLock.addEventListener('release', () => {
-
-            if(document.visibilityState === 'visible'){
-                enableWakeLock()
-            }
-
-        })
-
-    }catch(err){
-        console.log("WakeLock error:",err)
-    }
-
-}
-
-function disableWakeLock(){
-
-    if(wakeLock){
-
-        wakeLock.release()
-        wakeLock=null
-
+    if(phase==="idle"){
+        start()
+    }else{
+        stop()
     }
 
 }
@@ -151,95 +177,115 @@ function start(){
 
     currentSet=1
     phase="work"
-    currentTime=workTime
 
-    enableWakeLock()
+    startBtn.style.display="none"
+    stopBtn.style.display="block"
 
-    playBeep()
-
-    runTimer()
-
-}
-
-function runTimer(){
-
-    clearInterval(interval)
-
-    interval=setInterval(()=>{
-
-        document.getElementById("timer").innerText=format(currentTime)
-
-        if(currentTime===0){
-
-            if(phase==="work"){
-
-                if(currentSet>=sets){
-
-                    playBeep()
-
-                    document.getElementById("status").innerText="Упражнение завершено"
-
-                    clearInterval(interval)
-
-                    disableWakeLock()
-
-                    return
-                }
-
-                phase="rest"
-                currentTime=restTime
-
-                document.getElementById("status").innerText="Отдых"
-
-                playBeep()
-
-                enableWakeLock()
-
-            }
-            else{
-
-                phase="work"
-
-                currentSet++
-
-                currentTime=workTime
-
-                document.getElementById("status").innerText=exerciseName+" | подход "+currentSet+"/"+sets
-
-                playBeep()
-
-                enableWakeLock()
-
-            }
-
-        }
-
-        currentTime--
-
-    },1000)
+    startPhase(workTime)
 
 }
 
 function stop(){
 
-    clearInterval(interval)
+    cancelAnimationFrame(animationId)
 
-    document.getElementById("status").innerText="Остановлено"
+    phase="idle"
 
-    disableWakeLock()
+    greenFill.setAttribute("width",0)
+
+    startBtn.style.display="block"
+    stopBtn.style.display="none"
+
+    status.innerText="Остановлено"
 
 }
 
-document.addEventListener("visibilitychange", () => {
+function startPhase(duration){
 
-    if(document.visibilityState === "visible"){
-        enableWakeLock()
+    phaseDuration=duration
+    phaseStart=performance.now()
+
+    playBeep()
+
+    animate()
+
+}
+
+
+function setLabel(text){
+    if(label.textContent===text) return;
+    label.style.opacity=0;
+    setTimeout(()=>{
+        label.textContent=text;
+        label.style.opacity=1;
+    },20);
+}
+
+function animate(){
+
+    let now=performance.now()
+    let elapsed=(now-phaseStart)/1000
+
+    let progress=Math.min(elapsed/phaseDuration,1)
+
+    if(phase==="work"){
+
+        setLabel(currentSet+" / "+sets)
+        greenFill.setAttribute("width",560*progress)
+
+    }
+    else if(phase==="rest"){
+
+        setLabel("Отдых")
+        greenFill.setAttribute("width",560*(1-progress))
+
     }
 
-})
+    let remaining=Math.max(phaseDuration-elapsed,0)
+    timer.innerText=format(remaining)
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
+    if(progress>=1){
+
+        nextPhase()
+        return
+
+    }
+
+    animationId=requestAnimationFrame(animate)
+
+}
+
+function nextPhase(){
+
+    if(phase==="work"){
+
+        if(currentSet>=sets){
+
+            stop()
+            status.innerText="Упражнение завершено"
+            return
+
+        }
+
+        phase="rest"
+        status.innerText="Отдых"
+
+        startPhase(restTime)
+
+    }
+    else{
+
+        phase="work"
+        currentSet++
+
+        greenFill.setAttribute("width",0)
+
+        status.innerText=exerciseName+" | подход "+currentSet+"/"+sets
+
+        startPhase(workTime)
+
+    }
+
 }
 
 </script>
