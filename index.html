@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,6 +9,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
+
 body{
     font-family: Arial, sans-serif;
     background:#111;
@@ -18,10 +18,12 @@ body{
     margin:0;
     padding:30px;
 }
+
 .container{
     max-width:700px;
     margin:auto;
 }
+
 button{
     padding:12px 18px;
     margin:6px;
@@ -29,16 +31,20 @@ button{
     border:none;
     border-radius:6px;
 }
+
 .exercise-btn{background:#2b6cb0;color:white}
 .control-btn{background:#38a169;color:white}
 .stop-btn{background:#e53e3e;color:white}
+
 .timer{
     font-size:72px;
     margin:30px 0;
 }
+
 .status{
     font-size:22px;
 }
+
 </style>
 </head>
 
@@ -49,19 +55,29 @@ button{
 <h1>Тренировка кора</h1>
 
 <div>
+
 <button class="exercise-btn" onclick="selectExercise('Vacuum',15,10,10)">Vacuum</button>
+
 <button class="exercise-btn" onclick="selectExercise('Планка',40,45,3)">Планка</button>
+
 <button class="exercise-btn" onclick="selectExercise('Dead Bug',40,30,3)">Dead Bug</button>
+
 <button class="exercise-btn" onclick="selectExercise('Bird Dog',40,30,3)">Bird Dog</button>
+
 <button class="exercise-btn" onclick="selectExercise('Боковая планка',30,30,2)">Боковая планка</button>
+
 </div>
 
 <div class="timer" id="timer">00:00</div>
+
 <div class="status" id="status">Выберите упражнение</div>
 
 <div>
+
 <button class="control-btn" onclick="start()">Старт</button>
+
 <button class="stop-btn" onclick="stop()">Стоп</button>
+
 </div>
 
 </div>
@@ -78,25 +94,60 @@ let currentTime = 0
 let phase = "work"
 let interval = null
 
+let wakeLock = null
+
 const beep = new Audio("beep.wav")
 
 function playBeep(){
+
     beep.currentTime = 0
     beep.play()
+
 }
 
 function format(t){
+
     let m = Math.floor(t/60)
     let s = t%60
+
     return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")
+
 }
 
 function selectExercise(name,work,rest,s){
+
     exerciseName=name
     workTime=work
     restTime=rest
     sets=s
+
     document.getElementById("status").innerText=name+" | "+sets+" подходов"
+
+}
+
+async function enableWakeLock(){
+
+    try{
+
+        wakeLock = await navigator.wakeLock.request('screen')
+
+    }catch(err){
+
+        console.log("WakeLock error:",err)
+
+    }
+
+}
+
+function disableWakeLock(){
+
+    if(wakeLock){
+
+        wakeLock.release()
+        wakeLock=null
+
+    }
+
 }
 
 function start(){
@@ -107,10 +158,12 @@ function start(){
     phase="work"
     currentTime=workTime
 
-    // unlock audio for iOS
+    enableWakeLock()
+
     beep.play().then(()=>{beep.pause(); beep.currentTime=0})
 
     runTimer()
+
 }
 
 function runTimer(){
@@ -128,20 +181,31 @@ function runTimer(){
             if(phase==="work"){
 
                 if(currentSet>=sets){
+
                     document.getElementById("status").innerText="Упражнение завершено"
+
                     clearInterval(interval)
+
+                    disableWakeLock()
+
                     return
+
                 }
 
                 phase="rest"
                 currentTime=restTime
+
                 document.getElementById("status").innerText="Отдых"
 
-            }else{
+            }
+            else{
 
                 phase="work"
+
                 currentSet++
+
                 currentTime=workTime
+
                 document.getElementById("status").innerText=exerciseName+" | подход "+currentSet+"/"+sets
 
             }
@@ -155,12 +219,29 @@ function runTimer(){
 }
 
 function stop(){
+
     clearInterval(interval)
+
     document.getElementById("status").innerText="Остановлено"
+
+    disableWakeLock()
+
 }
 
+document.addEventListener("visibilitychange", () => {
+
+    if (wakeLock !== null && document.visibilityState === "visible") {
+
+        enableWakeLock()
+
+    }
+
+})
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
+
+    navigator.serviceWorker.register('service-worker.js')
+
 }
 
 </script>
